@@ -1,5 +1,7 @@
 package org.viettel.vgov.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,7 +15,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     
     List<Notification> findByUserIdOrderByCreatedAtDesc(Long userId);
     
+    Page<Notification> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    
     List<Notification> findByUserIdAndIsReadOrderByCreatedAtDesc(Long userId, Boolean isRead);
+    
+    Page<Notification> findByUserIdAndIsReadOrderByCreatedAtDesc(Long userId, Boolean isRead, Pageable pageable);
     
     @Query("SELECT n FROM Notification n WHERE n.user.id = :userId AND n.isRead = false ORDER BY n.createdAt DESC")
     List<Notification> findUnreadNotificationsByUserId(@Param("userId") Long userId);
@@ -29,6 +35,17 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     
     @Query("SELECT n FROM Notification n WHERE n.user.id = :userId AND n.notificationType = :type ORDER BY n.createdAt DESC")
     List<Notification> findByUserIdAndNotificationType(@Param("userId") Long userId, @Param("type") String notificationType);
+    
+    @Query("SELECT n FROM Notification n WHERE n.user.id = :userId AND n.notificationType = :type ORDER BY n.createdAt DESC")
+    Page<Notification> findByUserIdAndNotificationType(@Param("userId") Long userId, @Param("type") String notificationType, Pageable pageable);
+    
+    @Query("SELECT n FROM Notification n WHERE n.user.id = :userId AND " +
+           "(:isRead IS NULL OR n.isRead = :isRead) AND " +
+           "(:notificationType IS NULL OR n.notificationType = :notificationType)")
+    Page<Notification> findByUserIdWithFilters(@Param("userId") Long userId,
+                                               @Param("isRead") Boolean isRead,
+                                               @Param("notificationType") String notificationType,
+                                               Pageable pageable);
     
     void deleteByUserId(Long userId);
     

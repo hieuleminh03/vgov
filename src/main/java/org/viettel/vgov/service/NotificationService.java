@@ -1,6 +1,8 @@
 package org.viettel.vgov.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -27,7 +29,17 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final NotificationMapper notificationMapper;
     
-    public List<NotificationResponseDto> getCurrentUserNotifications() {
+    public Page<NotificationResponseDto> getCurrentUserNotifications(Pageable pageable, Boolean isRead, String notificationType) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        
+        Page<Notification> notifications = notificationRepository.findByUserIdWithFilters(
+                userPrincipal.getId(), isRead, notificationType, pageable);
+        
+        return notifications.map(notificationMapper::toResponseDto);
+    }
+    
+    public List<NotificationResponseDto> getAllCurrentUserNotifications() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         

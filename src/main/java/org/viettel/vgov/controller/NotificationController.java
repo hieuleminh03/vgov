@@ -4,9 +4,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.viettel.vgov.dto.response.NotificationResponseDto;
+import org.viettel.vgov.dto.response.PagedResponse;
 import org.viettel.vgov.service.NotificationService;
 
 import java.util.List;
@@ -22,10 +27,31 @@ public class NotificationController {
     
     private final NotificationService notificationService;
     
-    @Operation(summary = "Get user notifications", description = "Get all notifications for current user")
+    @Operation(summary = "Get user notifications with pagination", description = "Get paginated notifications for current user")
     @GetMapping
-    public ResponseEntity<List<NotificationResponseDto>> getCurrentUserNotifications() {
-        List<NotificationResponseDto> notifications = notificationService.getCurrentUserNotifications();
+    public ResponseEntity<PagedResponse<NotificationResponseDto>> getCurrentUserNotifications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) Boolean isRead,
+            @RequestParam(required = false) String notificationType) {
+        
+        Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        Page<NotificationResponseDto> notifications = notificationService.getCurrentUserNotifications(
+                pageable, isRead, notificationType);
+        
+        PagedResponse<NotificationResponseDto> response = PagedResponse.of(notifications);
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @Operation(summary = "Get all notifications (simple)", description = "Get all notifications for current user without pagination")
+    @GetMapping("/all")
+    public ResponseEntity<List<NotificationResponseDto>> getAllCurrentUserNotifications() {
+        List<NotificationResponseDto> notifications = notificationService.getAllCurrentUserNotifications();
         return ResponseEntity.ok(notifications);
     }
     

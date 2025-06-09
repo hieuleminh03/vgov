@@ -1,5 +1,8 @@
 package org.viettel.vgov.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -21,10 +24,13 @@ import java.util.Map;
 @RequestMapping("/api/projects")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@Tag(name = "Project Management", description = "Project CRUD operations and status management")
+@SecurityRequirement(name = "bearerAuth")
 public class ProjectController {
     
     private final ProjectService projectService;
     
+    @Operation(summary = "Get all projects", description = "List projects based on role permissions - Admin: all projects, PM: managed projects, Others: assigned projects")
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('PM') or hasRole('DEV') or hasRole('BA') or hasRole('TEST')")
     public ResponseEntity<StandardResponse<PagedResponse<ProjectResponseDto>>> getAllProjects(
@@ -33,6 +39,7 @@ public class ProjectController {
         return ResponseEntity.ok(StandardResponse.success(projects));
     }
     
+    @Operation(summary = "Get project by ID", description = "Get project details by ID - role-based access control")
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('PM') or @projectSecurityService.canAccessProject(#id, authentication.name)")
     public ResponseEntity<StandardResponse<ProjectResponseDto>> getProjectById(@PathVariable Long id) {
@@ -40,6 +47,7 @@ public class ProjectController {
         return ResponseEntity.ok(StandardResponse.success(project));
     }
     
+    @Operation(summary = "Create new project", description = "Create a new project (Admin only)")
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<ProjectResponseDto>> createProject(@Valid @RequestBody ProjectRequestDto requestDto) {
@@ -48,6 +56,7 @@ public class ProjectController {
                 .body(StandardResponse.success(project, "Project created successfully"));
     }
     
+    @Operation(summary = "Update project", description = "Update project information (Admin only)")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<ProjectResponseDto>> updateProject(
@@ -57,6 +66,7 @@ public class ProjectController {
         return ResponseEntity.ok(StandardResponse.success(project, "Project updated successfully"));
     }
     
+    @Operation(summary = "Delete project", description = "Delete project (Admin only)")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<String>> deleteProject(@PathVariable Long id) {
@@ -64,6 +74,7 @@ public class ProjectController {
         return ResponseEntity.ok(StandardResponse.success("Project deleted successfully"));
     }
     
+    @Operation(summary = "Update project status", description = "Update project status (Admin only)")
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<ProjectResponseDto>> updateProjectStatus(

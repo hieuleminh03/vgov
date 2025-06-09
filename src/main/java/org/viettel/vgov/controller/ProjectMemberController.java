@@ -1,5 +1,8 @@
 package org.viettel.vgov.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,16 +29,20 @@ import java.util.Map;
 @RequestMapping("/api/projects")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@Tag(name = "Project Members", description = "Project member assignment and workload management")
+@SecurityRequirement(name = "bearerAuth")
 public class ProjectMemberController {
 
     private final ProjectMemberService projectMemberService;
 
+    @Operation(summary = "Get project members", description = "Get all members assigned to a project")
     @GetMapping("/{id}/members")
     public ResponseEntity<List<ProjectMemberResponseDto>> getProjectMembers(@PathVariable Long id) {
         List<ProjectMemberResponseDto> members = projectMemberService.getProjectMembers(id);
         return ResponseEntity.ok(members);
     }
 
+    @Operation(summary = "Add member to project", description = "Assign user to project with workload allocation (Admin only)")
     @PostMapping("/{id}/members")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProjectMemberResponseDto> addMemberToProject(
@@ -45,6 +52,7 @@ public class ProjectMemberController {
         return ResponseEntity.status(HttpStatus.CREATED).body(member);
     }
 
+    @Operation(summary = "Update member workload", description = "Update workload allocation for project member (Admin only)")
     @PutMapping("/{id}/members/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProjectMemberResponseDto> updateMemberWorkload(
@@ -55,6 +63,7 @@ public class ProjectMemberController {
         return ResponseEntity.ok(member);
     }
 
+    @Operation(summary = "Remove member from project", description = "Remove user from project assignment (Admin only)")
     @DeleteMapping("/{id}/members/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> removeMemberFromProject(

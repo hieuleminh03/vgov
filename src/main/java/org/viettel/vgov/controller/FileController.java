@@ -1,5 +1,8 @@
 package org.viettel.vgov.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -17,10 +20,13 @@ import java.util.Map;
 @RequestMapping("/api/files")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@Tag(name = "File Management", description = "File upload, download and management via MinIO")
+@SecurityRequirement(name = "bearerAuth")
 public class FileController {
     
     private final FileService fileService;
     
+    @Operation(summary = "Upload file", description = "Upload file to MinIO storage")
     @PostMapping("/upload")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<FileUploadResponseDto> uploadFile(@RequestParam("file") MultipartFile file) {
@@ -28,6 +34,7 @@ public class FileController {
         return ResponseEntity.ok(response);
     }
     
+    @Operation(summary = "Download file", description = "Download file by filename")
     @GetMapping("/{filename}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Resource> getFile(@PathVariable String filename) {
@@ -39,6 +46,7 @@ public class FileController {
                 .body(resource);
     }
     
+    @Operation(summary = "Delete file", description = "Delete file from MinIO storage")
     @DeleteMapping("/{filename}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, String>> deleteFile(@PathVariable String filename) {
@@ -51,6 +59,7 @@ public class FileController {
         }
     }
     
+    @Operation(summary = "Get file URL", description = "Get public URL for file access")
     @GetMapping("/url/{filename}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, String>> getFileUrl(@PathVariable String filename) {

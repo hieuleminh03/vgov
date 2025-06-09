@@ -1,5 +1,8 @@
 package org.viettel.vgov.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,19 +17,23 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/work-logs")
+@RequestMapping("/api/worklogs")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@Tag(name = "Work Logs", description = "Work log tracking and reporting")
+@SecurityRequirement(name = "bearerAuth")
 public class WorkLogController {
     
     private final WorkLogService workLogService;
     
+    @Operation(summary = "Get all work logs", description = "Get all work logs with role-based filtering")
     @GetMapping
     public ResponseEntity<List<WorkLogResponseDto>> getAllWorkLogs() {
         List<WorkLogResponseDto> workLogs = workLogService.getAllWorkLogs();
         return ResponseEntity.ok(workLogs);
     }
     
+    @Operation(summary = "Get user work logs", description = "Get work logs for specific user (Admin/PM or own logs)")
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('PM') or @workLogService.canAccessUserWorkLogs(#userId, authentication.name)")
     public ResponseEntity<List<WorkLogResponseDto>> getWorkLogsByUserId(@PathVariable Long userId) {
@@ -34,12 +41,14 @@ public class WorkLogController {
         return ResponseEntity.ok(workLogs);
     }
     
+    @Operation(summary = "Get project work logs", description = "Get all work logs for specific project")
     @GetMapping("/project/{projectId}")
     public ResponseEntity<List<WorkLogResponseDto>> getWorkLogsByProjectId(@PathVariable Long projectId) {
         List<WorkLogResponseDto> workLogs = workLogService.getWorkLogsByProjectId(projectId);
         return ResponseEntity.ok(workLogs);
     }
     
+    @Operation(summary = "Create work log", description = "Log work hours for project tasks")
     @PostMapping
     @PreAuthorize("hasRole('PM') or hasRole('DEV') or hasRole('BA') or hasRole('TEST')")
     public ResponseEntity<WorkLogResponseDto> createWorkLog(@Valid @RequestBody WorkLogRequestDto requestDto) {
@@ -47,6 +56,7 @@ public class WorkLogController {
         return ResponseEntity.status(HttpStatus.CREATED).body(workLog);
     }
     
+    @Operation(summary = "Update work log", description = "Update existing work log entry")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('PM') or hasRole('DEV') or hasRole('BA') or hasRole('TEST')")
     public ResponseEntity<WorkLogResponseDto> updateWorkLog(
@@ -56,6 +66,7 @@ public class WorkLogController {
         return ResponseEntity.ok(workLog);
     }
     
+    @Operation(summary = "Delete work log", description = "Delete work log entry")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('PM') or hasRole('DEV') or hasRole('BA') or hasRole('TEST')")
     public ResponseEntity<Map<String, String>> deleteWorkLog(@PathVariable Long id) {

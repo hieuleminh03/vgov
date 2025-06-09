@@ -1,5 +1,8 @@
 package org.viettel.vgov.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -21,10 +24,13 @@ import java.util.Map;
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@Tag(name = "User Management", description = "User CRUD operations (Admin only)")
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
     
     private final UserService userService;
     
+    @Operation(summary = "Get all users", description = "Retrieve paginated list of all users (Admin only)")
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<PagedResponse<UserResponseDto>>> getAllUsers(
@@ -33,6 +39,7 @@ public class UserController {
         return ResponseEntity.ok(StandardResponse.success(users));
     }
     
+    @Operation(summary = "Get user by ID", description = "Retrieve user details by user ID (Admin only)")
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<UserResponseDto>> getUserById(@PathVariable Long id) {
@@ -40,6 +47,7 @@ public class UserController {
         return ResponseEntity.ok(StandardResponse.success(user));
     }
     
+    @Operation(summary = "Create new user", description = "Create a new user account (Admin only)")
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<UserResponseDto>> createUser(@Valid @RequestBody UserRequestDto requestDto) {
@@ -48,6 +56,7 @@ public class UserController {
                 .body(StandardResponse.success(user, "User created successfully"));
     }
     
+    @Operation(summary = "Update user", description = "Update user information (Admin only)")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<UserResponseDto>> updateUser(
@@ -57,6 +66,7 @@ public class UserController {
         return ResponseEntity.ok(StandardResponse.success(user, "User updated successfully"));
     }
     
+    @Operation(summary = "Deactivate user", description = "Deactivate user account (soft delete, Admin only)")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<String>> deactivateUser(@PathVariable Long id) {
@@ -64,6 +74,7 @@ public class UserController {
         return ResponseEntity.ok(StandardResponse.success("User deactivated successfully"));
     }
     
+    @Operation(summary = "Change user role", description = "Update user's role (Admin only). Note: Admin role cannot be changed")
     @PutMapping("/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<UserResponseDto>> changeUserRole(
@@ -74,6 +85,7 @@ public class UserController {
         return ResponseEntity.ok(StandardResponse.success(user, "User role updated successfully"));
     }
     
+    @Operation(summary = "Activate/Deactivate user", description = "Toggle user active status (Admin only)")
     @PutMapping("/{id}/activate")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<UserResponseDto>> activateDeactivateUser(
@@ -85,6 +97,7 @@ public class UserController {
         return ResponseEntity.ok(StandardResponse.success(user, message));
     }
     
+    @Operation(summary = "Get user workload", description = "Get user's current workload across all projects (Admin only)")
     @GetMapping("/{id}/workload")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<Map<String, Object>>> getUserWorkload(@PathVariable Long id) {

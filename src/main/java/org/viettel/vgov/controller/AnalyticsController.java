@@ -1,5 +1,8 @@
 package org.viettel.vgov.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,10 +14,13 @@ import org.viettel.vgov.service.AnalyticsService;
 @RequestMapping("/api/analytics")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@Tag(name = "Dashboard & Analytics", description = "Analytics data and reporting endpoints")
+@SecurityRequirement(name = "bearerAuth")
 public class AnalyticsController {
     
     private final AnalyticsService analyticsService;
     
+    @Operation(summary = "Get project analytics", description = "Retrieve project analytics data (Admin/PM only)")
     @GetMapping("/projects")
     @PreAuthorize("hasRole('admin') or hasRole('pm')")
     public ResponseEntity<AnalyticsResponseDto> getProjectAnalytics() {
@@ -22,6 +28,7 @@ public class AnalyticsController {
         return ResponseEntity.ok(analytics);
     }
     
+    @Operation(summary = "Get employee analytics", description = "Retrieve employee performance analytics (Admin only)")
     @GetMapping("/employees")
     @PreAuthorize("hasRole('admin')")
     public ResponseEntity<AnalyticsResponseDto> getEmployeeAnalytics() {
@@ -29,6 +36,7 @@ public class AnalyticsController {
         return ResponseEntity.ok(analytics);
     }
     
+    @Operation(summary = "Get workload analytics", description = "Retrieve team workload analytics (Admin only)")
     @GetMapping("/workload")
     @PreAuthorize("hasRole('admin')")
     public ResponseEntity<AnalyticsResponseDto> getWorkloadAnalytics() {
@@ -36,6 +44,7 @@ public class AnalyticsController {
         return ResponseEntity.ok(analytics);
     }
     
+    @Operation(summary = "Get project timeline", description = "Retrieve project timeline and milestones")
     @GetMapping("/project/{id}/timeline")
     @PreAuthorize("hasRole('admin') or hasRole('pm') or @projectSecurityService.canAccessProject(#id, authentication.name)")
     public ResponseEntity<AnalyticsResponseDto> getProjectTimeline(@PathVariable Long id) {

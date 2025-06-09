@@ -73,19 +73,3 @@ public class ProjectMemberController {
         return ResponseEntity.ok(Map.of("message", "Member removed from project successfully"));
     }
 }
-
-@RestController
-@RequestMapping("/api/users")
-@CrossOrigin(origins = "*")
-@RequiredArgsConstructor
-class UserWorkloadController {
-
-    private final ProjectMemberService projectMemberService;
-
-    @GetMapping("/{id}/workload")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponseDto> getUserWorkload(@PathVariable Long id) {
-        UserResponseDto user = projectMemberService.getUserWorkload(id);
-        return ResponseEntity.ok(user);
-    }
-}

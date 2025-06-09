@@ -61,6 +61,9 @@ public class WebSecurityConfig {
                 .requestMatchers("/api/system/health").permitAll()
                 .requestMatchers("/api/system/version").permitAll()
                 .requestMatchers("/api/lookup/**").permitAll()
+                // Actuator endpoints
+                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/actuator/info").permitAll()
                 // Swagger UI endpoints
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/swagger-ui.html").permitAll()

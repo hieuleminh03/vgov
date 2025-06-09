@@ -39,6 +39,15 @@ app:
     bucket-name: ${MINIO_BUCKET_NAME:vgov-files}
     secure: ${MINIO_SECURE:false}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
 logging:
   level:
     org.viettel.vgov: ${LOG_LEVEL:INFO}

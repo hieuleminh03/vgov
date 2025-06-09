@@ -46,7 +46,7 @@ public interface WorkLogRepository extends JpaRepository<WorkLog, Long> {
     @Query("SELECT COUNT(wl) FROM WorkLog wl WHERE wl.project.id = :projectId")
     Long countByProjectId(@Param("projectId") Long projectId);
     
-    @Query("SELECT new org.viettel.vgov.dto.response.AnalyticsResponseDto$WorkLogSummaryDto(wl.workDate, SUM(wl.hoursWorked), COUNT(wl), wl.project.id, wl.project.projectName) " +
+    @Query("SELECT new org.viettel.vgov.dto.response.AnalyticsResponseDto$WorkLogSummaryDto(wl.workDate, SUM(wl.hoursWorked), CAST(COUNT(wl) AS int), wl.project.id, wl.project.projectName) " +
            "FROM WorkLog wl WHERE wl.project.id = :projectId " +
            "GROUP BY wl.workDate, wl.project.id, wl.project.projectName " +
            "ORDER BY wl.workDate DESC")

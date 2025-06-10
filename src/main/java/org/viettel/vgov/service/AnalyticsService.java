@@ -101,10 +101,66 @@ public class AnalyticsService {
     }
     
     public AnalyticsResponseDto getWorkloadAnalytics() {
+        User currentUser = getCurrentUser();
         List<User> employees = userRepository.findByIsActiveTrue();
+        List<Project> projects = getAccessibleProjects(currentUser);
         
         AnalyticsResponseDto analytics = new AnalyticsResponseDto();
         
+        // PROJECT ANALYTICS
+        analytics.setTotalProjects((long) projects.size());
+        analytics.setActiveProjects(projects.stream()
+                .filter(p -> p.getStatus() == Project.Status.InProgress)
+                .count());
+        analytics.setCompletedProjects(projects.stream()
+                .filter(p -> p.getStatus() == Project.Status.Closed)
+                .count());
+        
+        // Projects by status
+        Map<String, Long> projectsByStatus = projects.stream()
+                .collect(Collectors.groupingBy(
+                    p -> p.getStatus().getDisplayName(),
+                    Collectors.counting()
+                ));
+        analytics.setProjectsByStatus(projectsByStatus);
+        
+        // Projects by type
+        Map<String, Long> projectsByType = projects.stream()
+                .collect(Collectors.groupingBy(
+                    p -> p.getProjectType().getDisplayName(),
+                    Collectors.counting()
+                ));
+        analytics.setProjectsByType(projectsByType);
+        
+        // EMPLOYEE ANALYTICS
+        analytics.setTotalEmployees((long) employees.size());
+        analytics.setActiveEmployees((long) employees.size());
+        
+        // Employees by role
+        Map<String, Long> employeesByRole = employees.stream()
+                .collect(Collectors.groupingBy(
+                    u -> u.getRole().name(),
+                    Collectors.counting()
+                ));
+        analytics.setEmployeesByRole(employeesByRole);
+        
+        // Average workload
+        BigDecimal totalWorkload = employees.stream()
+                .filter(u -> u.getRole() != User.Role.admin)
+                .map(u -> projectMemberRepository.getTotalWorkloadByUserId(u.getId()))
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        long nonAdminEmployees = employees.stream()
+                .filter(u -> u.getRole() != User.Role.admin)
+                .count();
+        
+        BigDecimal averageWorkload = nonAdminEmployees > 0 
+                ? totalWorkload.divide(BigDecimal.valueOf(nonAdminEmployees), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+        analytics.setAverageWorkload(averageWorkload);
+        
+        // WORKLOAD ANALYTICS
         // Workload by role
         Map<String, BigDecimal> workloadByRole = new HashMap<>();
         for (User.Role role : User.Role.values()) {
@@ -136,7 +192,6 @@ public class AnalyticsService {
                     );
                 })
                 .sorted((u1, u2) -> u2.getTotalWorkload().compareTo(u1.getTotalWorkload()))
-                .limit(10)
                 .collect(Collectors.toList());
         
         analytics.setTopWorkloadUsers(topWorkloadUsers);
@@ -157,6 +212,9 @@ public class AnalyticsService {
                 : BigDecimal.ZERO;
         
         analytics.setSystemWorkloadUtilization(utilization);
+        
+        // RECENT ACTIVITIES - placeholder
+        analytics.setRecentActivities(new ArrayList<>());
         
         return analytics;
     }

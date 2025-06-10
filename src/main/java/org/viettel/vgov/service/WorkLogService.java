@@ -156,18 +156,48 @@ public class WorkLogService {
         Project project = projectRepository.findById(requestDto.getProjectId())
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + requestDto.getProjectId()));
         
-        // Check if user is assigned to this project
-        boolean isProjectMember = projectRepository.findProjectsByUserId(currentUser.getId())
-                .stream()
-                .anyMatch(p -> p.getId().equals(requestDto.getProjectId()));
-        
-        if (!isProjectMember) {
-            throw new AccessDeniedException("You are not assigned to this project");
+        // Determine target user for the work log
+        User targetUser;
+        if (requestDto.getUserId() != null) {
+            // PM is creating work log for another user
+            if (currentUser.getRole() != User.Role.pm) {
+                throw new AccessDeniedException("Only Project Managers can create work logs for other users");
+            }
+            
+            // Check if current user is the PM of this project
+            if (!project.getPmEmail().equals(currentUser.getEmail())) {
+                throw new AccessDeniedException("You can only create work logs for projects you manage");
+            }
+            
+            targetUser = userRepository.findById(requestDto.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Target user not found with id: " + requestDto.getUserId()));
+            
+            // Check if target user is assigned to this project
+            boolean isTargetUserProjectMember = projectRepository.findProjectsByUserId(targetUser.getId())
+                    .stream()
+                    .anyMatch(p -> p.getId().equals(requestDto.getProjectId()));
+            
+            if (!isTargetUserProjectMember) {
+                throw new AccessDeniedException("Target user is not assigned to this project");
+            }
+            
+        } else {
+            // User is creating work log for themselves
+            targetUser = currentUser;
+            
+            // Check if user is assigned to this project
+            boolean isProjectMember = projectRepository.findProjectsByUserId(currentUser.getId())
+                    .stream()
+                    .anyMatch(p -> p.getId().equals(requestDto.getProjectId()));
+            
+            if (!isProjectMember) {
+                throw new AccessDeniedException("You are not assigned to this project");
+            }
         }
         
         // Check if work log already exists for this user, project, and date
         if (workLogRepository.findByUserIdAndProjectIdAndWorkDate(
-                currentUser.getId(), requestDto.getProjectId(), requestDto.getWorkDate()).isPresent()) {
+                targetUser.getId(), requestDto.getProjectId(), requestDto.getWorkDate()).isPresent()) {
             throw new IllegalArgumentException("Work log already exists for this date and project");
         }
         
@@ -183,7 +213,7 @@ public class WorkLogService {
         }
         
         WorkLog workLog = workLogMapper.toEntity(requestDto);
-        workLog.setUser(currentUser);
+        workLog.setUser(targetUser);
         workLog.setProject(project);
         
         WorkLog savedWorkLog = workLogRepository.save(workLog);
@@ -199,14 +229,26 @@ public class WorkLogService {
         User currentUser = userRepository.findById(userPrincipal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
-        // Only the owner can update their work log
-        if (!workLog.getUser().getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You can only update your own work logs");
-        }
-        
         // Admin cannot update work logs
         if (currentUser.getRole() == User.Role.admin) {
             throw new AccessDeniedException("Admin users cannot update work logs");
+        }
+        
+        // Check if user can update this work log
+        boolean canUpdate = false;
+        if (workLog.getUser().getId().equals(currentUser.getId())) {
+            // User can update their own work log
+            canUpdate = true;
+        } else if (currentUser.getRole() == User.Role.pm) {
+            // PM can update work logs for users in their projects
+            Project project = workLog.getProject();
+            if (project.getPmEmail().equals(currentUser.getEmail())) {
+                canUpdate = true;
+            }
+        }
+        
+        if (!canUpdate) {
+            throw new AccessDeniedException("You can only update your own work logs or work logs of employees in projects you manage");
         }
         
         // Validate hours worked
@@ -224,7 +266,7 @@ public class WorkLogService {
         // Check if changing date conflicts with existing work log
         if (!workLog.getWorkDate().equals(requestDto.getWorkDate())) {
             if (workLogRepository.findByUserIdAndProjectIdAndWorkDate(
-                    currentUser.getId(), workLog.getProject().getId(), requestDto.getWorkDate()).isPresent()) {
+                    workLog.getUser().getId(), workLog.getProject().getId(), requestDto.getWorkDate()).isPresent()) {
                 throw new IllegalArgumentException("Work log already exists for this date and project");
             }
         }
@@ -248,14 +290,26 @@ public class WorkLogService {
         User currentUser = userRepository.findById(userPrincipal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
-        // Only the owner can delete their work log
-        if (!workLog.getUser().getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You can only delete your own work logs");
-        }
-        
         // Admin cannot delete work logs
         if (currentUser.getRole() == User.Role.admin) {
             throw new AccessDeniedException("Admin users cannot delete work logs");
+        }
+        
+        // Check if user can delete this work log
+        boolean canDelete = false;
+        if (workLog.getUser().getId().equals(currentUser.getId())) {
+            // User can delete their own work log
+            canDelete = true;
+        } else if (currentUser.getRole() == User.Role.pm) {
+            // PM can delete work logs for users in their projects
+            Project project = workLog.getProject();
+            if (project.getPmEmail().equals(currentUser.getEmail())) {
+                canDelete = true;
+            }
+        }
+        
+        if (!canDelete) {
+            throw new AccessDeniedException("You can only delete your own work logs or work logs of employees in projects you manage");
         }
         
         workLogRepository.delete(workLog);

@@ -80,6 +80,11 @@ public class ProjectMemberService {
         User user = userRepository.findById(requestDto.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + requestDto.getUserId()));
         
+        // Admin users cannot be added to projects
+        if (user.getRole() == User.Role.admin) {
+            throw new IllegalArgumentException("Admin users cannot be added to projects");
+        }
+        
         // Check if user is already a member of this project
         if (projectMemberRepository.existsByProjectIdAndUserIdAndIsActive(projectId, requestDto.getUserId(), true)) {
             throw new IllegalArgumentException("User is already a member of this project");

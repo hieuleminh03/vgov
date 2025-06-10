@@ -15,6 +15,10 @@ public class WorkLogRequestDto {
     @NotNull(message = "Project ID is required")
     private Long projectId;
     
+    // Optional field: If provided, PM can create work log for this user (only PM can do this)
+    // If null, work log is created for the current user
+    private Long userId;
+    
     @NotNull(message = "Work date is required")
     private LocalDate workDate;
     

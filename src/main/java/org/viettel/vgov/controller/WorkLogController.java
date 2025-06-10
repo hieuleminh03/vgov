@@ -26,10 +26,22 @@ public class WorkLogController {
     
     private final WorkLogService workLogService;
     
-    @Operation(summary = "Get all work logs", description = "Get all work logs with role-based filtering")
+    @Operation(summary = "Get all work logs", description = "Get all work logs with role-based filtering and search")
     @GetMapping
-    public ResponseEntity<List<WorkLogResponseDto>> getAllWorkLogs() {
-        List<WorkLogResponseDto> workLogs = workLogService.getAllWorkLogs();
+    public ResponseEntity<List<WorkLogResponseDto>> getAllWorkLogs(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long projectId,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String workDateFrom,
+            @RequestParam(required = false) String workDateTo,
+            @RequestParam(required = false) Double minHours,
+            @RequestParam(required = false) Double maxHours,
+            @RequestParam(required = false) String taskFeature,
+            @RequestParam(required = false, defaultValue = "workDate") String sortBy,
+            @RequestParam(required = false, defaultValue = "desc") String sortDir) {
+        List<WorkLogResponseDto> workLogs = workLogService.getAllWorkLogs(
+            search, projectId, userId, workDateFrom, workDateTo,
+            minHours, maxHours, taskFeature, sortBy, sortDir);
         return ResponseEntity.ok(workLogs);
     }
     

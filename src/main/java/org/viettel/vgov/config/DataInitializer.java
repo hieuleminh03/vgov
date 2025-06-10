@@ -578,15 +578,13 @@ public class DataInitializer implements CommandLineRunner {
         }
         
         // Process closed projects separately (these don't affect current workload)
+        // Keep members active for closed projects since they completed the project successfully
         for (Project project : closedProjects) {
             // Assign PM
             User pm = pms.get(random.nextInt(pms.size()));
             BigDecimal pmWorkload = new BigDecimal(15 + random.nextInt(16)); // 15-30%
             
-            ProjectMember pmMember = createProjectMember(project, pm, pmWorkload, admin);
-            pmMember.setIsActive(false);
-            pmMember.setLeftDate(project.getEndDate());
-            projectMemberRepository.save(pmMember);
+            createProjectMember(project, pm, pmWorkload, admin);
             
             // Assign developers
             int devCount = 2 + random.nextInt(3); // 2-4 developers
@@ -603,10 +601,7 @@ public class DataInitializer implements CommandLineRunner {
                     assignedDevs.add(dev);
                     BigDecimal devWorkload = new BigDecimal(25 + random.nextInt(26)); // 25-50%
                     
-                    ProjectMember member = createProjectMember(project, dev, devWorkload, admin);
-                    member.setIsActive(false);
-                    member.setLeftDate(project.getEndDate());
-                    projectMemberRepository.save(member);
+                    createProjectMember(project, dev, devWorkload, admin);
                 }
             }
             
@@ -625,10 +620,7 @@ public class DataInitializer implements CommandLineRunner {
                     assignedBAs.add(ba);
                     BigDecimal baWorkload = new BigDecimal(20 + random.nextInt(21)); // 20-40%
                     
-                    ProjectMember member = createProjectMember(project, ba, baWorkload, admin);
-                    member.setIsActive(false);
-                    member.setLeftDate(project.getEndDate());
-                    projectMemberRepository.save(member);
+                    createProjectMember(project, ba, baWorkload, admin);
                 }
             }
             
@@ -647,10 +639,7 @@ public class DataInitializer implements CommandLineRunner {
                     assignedTesters.add(tester);
                     BigDecimal testerWorkload = new BigDecimal(20 + random.nextInt(21)); // 20-40%
                     
-                    ProjectMember member = createProjectMember(project, tester, testerWorkload, admin);
-                    member.setIsActive(false);
-                    member.setLeftDate(project.getEndDate());
-                    projectMemberRepository.save(member);
+                    createProjectMember(project, tester, testerWorkload, admin);
                 }
             }
         }

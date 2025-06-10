@@ -67,7 +67,15 @@ public class ProjectMemberService {
             throw new AccessDeniedException("Access denied to this project");
         }
         
-        List<ProjectMember> members = projectMemberRepository.findByProjectIdAndIsActive(projectId, true);
+        // For closed projects, show all members (including inactive ones who completed the project)
+        // For active projects, show only active members
+        List<ProjectMember> members;
+        if (project.getStatus() == Project.Status.Closed) {
+            members = projectMemberRepository.findByProjectId(projectId);
+        } else {
+            members = projectMemberRepository.findByProjectIdAndIsActive(projectId, true);
+        }
+        
         return members.stream()
                 .map(projectMemberMapper::toResponseDto)
                 .collect(Collectors.toList());

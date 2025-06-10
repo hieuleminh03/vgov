@@ -44,10 +44,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     // Filter method for user search with pagination
     @Query("SELECT u FROM User u WHERE " +
-           "(:search IS NULL OR " +
-           " LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           " LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           " LOWER(u.employeeCode) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+           "(:search IS NULL OR :search = '' OR " +
+           " u.fullName LIKE CONCAT('%', :search, '%') OR " +
+           " u.email LIKE CONCAT('%', :search, '%') OR " +
+           " u.employeeCode LIKE CONCAT('%', :search, '%')) AND " +
            "(:roleEnum IS NULL OR u.role = :roleEnum) AND " +
            "(:isActive IS NULL OR u.isActive = :isActive)")
     Page<User> findUsersWithFilters(@Param("search") String search, 

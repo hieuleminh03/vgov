@@ -396,6 +396,82 @@ public class DataInitializer implements CommandLineRunner {
                                        "Hệ thống giám sát năng lượng fusion.", admin);
         projects.add(projectRepository.save(proj34));
         
+        // Additional Active Projects for Better Workload Distribution
+        User pm3 = users.get(3); // pm3@vgov.vn - this is actually PM003
+        
+        Project proj35 = createProject("PROJ035", "Cloud Native Microservices", pm1.getEmail(),
+                                       LocalDate.of(2025, 6, 15), LocalDate.of(2025, 12, 31),
+                                       Project.ProjectType.TM, Project.Status.InProgress,
+                                       "Chuyển đổi monolith sang microservices cho ngân hàng Malaysia.", admin);
+        projects.add(projectRepository.save(proj35));
+        
+        Project proj36 = createProject("PROJ036", "Digital Identity Platform", pm2.getEmail(),
+                                       LocalDate.of(2025, 5, 1), LocalDate.of(2025, 11, 15),
+                                       Project.ProjectType.OSDC, Project.Status.InProgress,
+                                       "Nền tảng định danh số cho chính phủ Indonesia.", admin);
+        projects.add(projectRepository.save(proj36));
+        
+        Project proj37 = createProject("PROJ037", "Real-time Analytics Engine", pm3.getEmail(),
+                                       LocalDate.of(2025, 4, 15), LocalDate.of(2025, 10, 30),
+                                       Project.ProjectType.Package, Project.Status.InProgress,
+                                       "Engine phân tích dữ liệu real-time cho tập đoàn Hàn Quốc.", admin);
+        projects.add(projectRepository.save(proj37));
+        
+        Project proj38 = createProject("PROJ038", "Mobile Payment Gateway", pm1.getEmail(),
+                                       LocalDate.of(2025, 3, 1), LocalDate.of(2025, 9, 15),
+                                       Project.ProjectType.TM, Project.Status.InProgress,
+                                       "Cổng thanh toán di động cho startup Thái Lan.", admin);
+        projects.add(projectRepository.save(proj38));
+        
+        Project proj39 = createProject("PROJ039", "Supply Chain Visibility", pm2.getEmail(),
+                                       LocalDate.of(2025, 5, 15), LocalDate.of(2025, 11, 30),
+                                       Project.ProjectType.OSDC, Project.Status.InProgress,
+                                       "Hệ thống minh bạch chuỗi cung ứng cho công ty logistics Singapore.", admin);
+        projects.add(projectRepository.save(proj39));
+        
+        Project proj40 = createProject("PROJ040", "AI Content Moderation", pm3.getEmail(),
+                                       LocalDate.of(2025, 6, 1), LocalDate.of(2025, 12, 15),
+                                       Project.ProjectType.Package, Project.Status.InProgress,
+                                       "Hệ thống kiểm duyệt nội dung AI cho mạng xã hội.", admin);
+        projects.add(projectRepository.save(proj40));
+        
+        Project proj41 = createProject("PROJ041", "Green Finance Platform", pm1.getEmail(),
+                                       LocalDate.of(2025, 4, 1), LocalDate.of(2025, 10, 15),
+                                       Project.ProjectType.TM, Project.Status.InProgress,
+                                       "Nền tảng tài chính xanh cho ngân hàng Philippines.", admin);
+        projects.add(projectRepository.save(proj41));
+        
+        Project proj42 = createProject("PROJ042", "Smart Contract Auditor", pm2.getEmail(),
+                                       LocalDate.of(2025, 3, 15), LocalDate.of(2025, 9, 30),
+                                       Project.ProjectType.OSDC, Project.Status.InProgress,
+                                       "Công cụ audit smart contract tự động cho DeFi.", admin);
+        projects.add(projectRepository.save(proj42));
+        
+        Project proj43 = createProject("PROJ043", "Customer Journey Analytics", pm3.getEmail(),
+                                       LocalDate.of(2025, 5, 1), LocalDate.of(2025, 11, 15),
+                                       Project.ProjectType.Package, Project.Status.InProgress,
+                                       "Phân tích hành trình khách hàng cho retail Nhật Bản.", admin);
+        projects.add(projectRepository.save(proj43));
+        
+        Project proj44 = createProject("PROJ044", "Edge Computing Platform", pm1.getEmail(),
+                                       LocalDate.of(2025, 6, 15), LocalDate.of(2025, 12, 31),
+                                       Project.ProjectType.TM, Project.Status.InProgress,
+                                       "Nền tảng edge computing cho IoT manufacturing.", admin);
+        projects.add(projectRepository.save(proj44));
+        
+        // Additional On Hold Projects
+        Project proj45 = createProject("PROJ045", "Quantum Machine Learning", pm2.getEmail(),
+                                       LocalDate.of(2025, 7, 1), LocalDate.of(2026, 3, 31),
+                                       Project.ProjectType.OSDC, Project.Status.Hold,
+                                       "Nghiên cứu machine learning trên quantum computer.", admin);
+        projects.add(projectRepository.save(proj45));
+        
+        Project proj46 = createProject("PROJ046", "Neural Interface SDK", pm3.getEmail(),
+                                       LocalDate.of(2025, 8, 1), LocalDate.of(2026, 4, 30),
+                                       Project.ProjectType.Package, Project.Status.Hold,
+                                       "SDK cho giao diện thần kinh cho game VR.", admin);
+        projects.add(projectRepository.save(proj46));
+        
         logger.info("Created {} sample projects", projects.size());
         return projects;
     }
@@ -427,25 +503,93 @@ public class DataInitializer implements CommandLineRunner {
         User admin = users.get(0);
         
         Random random = new Random(42); // Fixed seed for consistent results
-          for (int i = 0; i < projects.size(); i++) {
-            Project project = projects.get(i);
-            
+        
+        // Track current workload for each user to prevent exceeding 100%
+        Map<Long, BigDecimal> currentWorkloads = new HashMap<>();
+        
+        // First pass: Assign to active projects only, then closed projects
+        List<Project> activeProjects = projects.stream()
+            .filter(p -> p.getStatus() == Project.Status.InProgress || p.getStatus() == Project.Status.Hold)
+            .collect(Collectors.toList());
+        
+        List<Project> closedProjects = projects.stream()
+            .filter(p -> p.getStatus() == Project.Status.Closed)
+            .collect(Collectors.toList());
+        
+        // Process active projects first to ensure proper workload distribution
+        for (Project project : activeProjects) {
             // Assign PM (rotate through available PMs)
-            User pm = pms.get(i % pms.size());
-            BigDecimal pmWorkload = new BigDecimal(20 + random.nextInt(31)); // 20-50%
+            User pm = pms.get(random.nextInt(pms.size()));
+            BigDecimal pmWorkload = getAvailableWorkload(pm.getId(), currentWorkloads, 15, 25); // 15-25%
             
-            // Create PM member (handle closed projects properly)
-            if (project.getStatus() == Project.Status.Closed) {
-                ProjectMember pmMember = createProjectMember(project, pm, pmWorkload, admin);
-                pmMember.setIsActive(false);
-                pmMember.setLeftDate(project.getEndDate());
-                projectMemberRepository.save(pmMember);
-            } else {
+            if (pmWorkload.compareTo(BigDecimal.ZERO) > 0) {
                 createProjectMember(project, pm, pmWorkload, admin);
+                currentWorkloads.put(pm.getId(), 
+                    currentWorkloads.getOrDefault(pm.getId(), BigDecimal.ZERO).add(pmWorkload));
             }
             
-            // Assign 2-5 developers per project
-            int devCount = 2 + random.nextInt(4); // 2-5 developers
+            // Assign 2-4 developers per project with reduced workload
+            int devCount = 2 + random.nextInt(3); // 2-4 developers
+            Set<User> assignedDevs = new HashSet<>();
+            for (int j = 0; j < devCount && j < devs.size(); j++) {
+                User dev = getAvailableUser(devs, assignedDevs, currentWorkloads, random);
+                if (dev != null) {
+                    BigDecimal devWorkload = getAvailableWorkload(dev.getId(), currentWorkloads, 25, 45); // 25-45%
+                    if (devWorkload.compareTo(BigDecimal.ZERO) > 0) {
+                        assignedDevs.add(dev);
+                        createProjectMember(project, dev, devWorkload, admin);
+                        currentWorkloads.put(dev.getId(), 
+                            currentWorkloads.getOrDefault(dev.getId(), BigDecimal.ZERO).add(devWorkload));
+                    }
+                }
+            }
+            
+            // Assign 1-2 BAs per project with reduced workload
+            int baCount = 1 + random.nextInt(2); // 1-2 BAs
+            Set<User> assignedBAs = new HashSet<>();
+            for (int j = 0; j < baCount && j < bas.size(); j++) {
+                User ba = getAvailableUser(bas, assignedBAs, currentWorkloads, random);
+                if (ba != null) {
+                    BigDecimal baWorkload = getAvailableWorkload(ba.getId(), currentWorkloads, 20, 35); // 20-35%
+                    if (baWorkload.compareTo(BigDecimal.ZERO) > 0) {
+                        assignedBAs.add(ba);
+                        createProjectMember(project, ba, baWorkload, admin);
+                        currentWorkloads.put(ba.getId(), 
+                            currentWorkloads.getOrDefault(ba.getId(), BigDecimal.ZERO).add(baWorkload));
+                    }
+                }
+            }
+            
+            // Assign 1-2 testers per project with reduced workload
+            int testerCount = 1 + random.nextInt(2); // 1-2 testers
+            Set<User> assignedTesters = new HashSet<>();
+            for (int j = 0; j < testerCount && j < testers.size(); j++) {
+                User tester = getAvailableUser(testers, assignedTesters, currentWorkloads, random);
+                if (tester != null) {
+                    BigDecimal testerWorkload = getAvailableWorkload(tester.getId(), currentWorkloads, 20, 35); // 20-35%
+                    if (testerWorkload.compareTo(BigDecimal.ZERO) > 0) {
+                        assignedTesters.add(tester);
+                        createProjectMember(project, tester, testerWorkload, admin);
+                        currentWorkloads.put(tester.getId(), 
+                            currentWorkloads.getOrDefault(tester.getId(), BigDecimal.ZERO).add(testerWorkload));
+                    }
+                }
+            }
+        }
+        
+        // Process closed projects separately (these don't affect current workload)
+        for (Project project : closedProjects) {
+            // Assign PM
+            User pm = pms.get(random.nextInt(pms.size()));
+            BigDecimal pmWorkload = new BigDecimal(15 + random.nextInt(16)); // 15-30%
+            
+            ProjectMember pmMember = createProjectMember(project, pm, pmWorkload, admin);
+            pmMember.setIsActive(false);
+            pmMember.setLeftDate(project.getEndDate());
+            projectMemberRepository.save(pmMember);
+            
+            // Assign developers
+            int devCount = 2 + random.nextInt(3); // 2-4 developers
             Set<User> assignedDevs = new HashSet<>();
             for (int j = 0; j < devCount && j < devs.size(); j++) {
                 User dev;
@@ -457,21 +601,16 @@ public class DataInitializer implements CommandLineRunner {
                 
                 if (!assignedDevs.contains(dev)) {
                     assignedDevs.add(dev);
-                    BigDecimal devWorkload = new BigDecimal(40 + random.nextInt(41)); // 40-80%
+                    BigDecimal devWorkload = new BigDecimal(25 + random.nextInt(26)); // 25-50%
                     
-                    // For closed projects, mark members as inactive
-                    if (project.getStatus() == Project.Status.Closed) {
-                        ProjectMember member = createProjectMember(project, dev, devWorkload, admin);
-                        member.setIsActive(false);
-                        member.setLeftDate(project.getEndDate());
-                        projectMemberRepository.save(member);
-                    } else {
-                        createProjectMember(project, dev, devWorkload, admin);
-                    }
+                    ProjectMember member = createProjectMember(project, dev, devWorkload, admin);
+                    member.setIsActive(false);
+                    member.setLeftDate(project.getEndDate());
+                    projectMemberRepository.save(member);
                 }
             }
             
-            // Assign 1-2 BAs per project
+            // Assign BAs
             int baCount = 1 + random.nextInt(2); // 1-2 BAs
             Set<User> assignedBAs = new HashSet<>();
             for (int j = 0; j < baCount && j < bas.size(); j++) {
@@ -484,22 +623,17 @@ public class DataInitializer implements CommandLineRunner {
                 
                 if (!assignedBAs.contains(ba)) {
                     assignedBAs.add(ba);
-                    BigDecimal baWorkload = new BigDecimal(30 + random.nextInt(41)); // 30-70%
+                    BigDecimal baWorkload = new BigDecimal(20 + random.nextInt(21)); // 20-40%
                     
-                    // For closed projects, mark members as inactive
-                    if (project.getStatus() == Project.Status.Closed) {
-                        ProjectMember member = createProjectMember(project, ba, baWorkload, admin);
-                        member.setIsActive(false);
-                        member.setLeftDate(project.getEndDate());
-                        projectMemberRepository.save(member);
-                    } else {
-                        createProjectMember(project, ba, baWorkload, admin);
-                    }
+                    ProjectMember member = createProjectMember(project, ba, baWorkload, admin);
+                    member.setIsActive(false);
+                    member.setLeftDate(project.getEndDate());
+                    projectMemberRepository.save(member);
                 }
             }
             
-            // Assign 1-3 testers per project
-            int testerCount = 1 + random.nextInt(3); // 1-3 testers
+            // Assign testers
+            int testerCount = 1 + random.nextInt(2); // 1-2 testers
             Set<User> assignedTesters = new HashSet<>();
             for (int j = 0; j < testerCount && j < testers.size(); j++) {
                 User tester;
@@ -511,21 +645,54 @@ public class DataInitializer implements CommandLineRunner {
                 
                 if (!assignedTesters.contains(tester)) {
                     assignedTesters.add(tester);
-                    BigDecimal testerWorkload = new BigDecimal(25 + random.nextInt(46)); // 25-70%
+                    BigDecimal testerWorkload = new BigDecimal(20 + random.nextInt(21)); // 20-40%
                     
-                    // For closed projects, mark members as inactive
-                    if (project.getStatus() == Project.Status.Closed) {
-                        ProjectMember member = createProjectMember(project, tester, testerWorkload, admin);
-                        member.setIsActive(false);
-                        member.setLeftDate(project.getEndDate());
-                        projectMemberRepository.save(member);
-                    } else {
-                        createProjectMember(project, tester, testerWorkload, admin);
-                    }                }
+                    ProjectMember member = createProjectMember(project, tester, testerWorkload, admin);
+                    member.setIsActive(false);
+                    member.setLeftDate(project.getEndDate());
+                    projectMemberRepository.save(member);
+                }
             }
         }
         
         logger.info("Created project member assignments for {} projects", projects.size());
+    }
+    
+    // Helper method to get available workload for a user (max 100%)
+    private BigDecimal getAvailableWorkload(Long userId, Map<Long, BigDecimal> currentWorkloads, 
+                                           int minWorkload, int maxWorkload) {
+        BigDecimal currentWorkload = currentWorkloads.getOrDefault(userId, BigDecimal.ZERO);
+        BigDecimal maxAllowed = new BigDecimal("100").subtract(currentWorkload);
+        
+        if (maxAllowed.compareTo(new BigDecimal(minWorkload)) < 0) {
+            return BigDecimal.ZERO; // No available capacity
+        }
+        
+        // Calculate desired workload within available capacity
+        int desiredWorkload = minWorkload + (int)(Math.random() * (maxWorkload - minWorkload + 1));
+        BigDecimal desired = new BigDecimal(desiredWorkload);
+        
+        // Return the minimum of desired workload and available capacity
+        return desired.min(maxAllowed);
+    }
+    
+    // Helper method to get an available user that hasn't been assigned to current project
+    // and still has workload capacity
+    private User getAvailableUser(List<User> users, Set<User> assignedUsers, 
+                                 Map<Long, BigDecimal> currentWorkloads, Random random) {
+        List<User> availableUsers = users.stream()
+            .filter(user -> !assignedUsers.contains(user))
+            .filter(user -> {
+                BigDecimal currentWorkload = currentWorkloads.getOrDefault(user.getId(), BigDecimal.ZERO);
+                return currentWorkload.compareTo(new BigDecimal("95")) < 0; // Leave at least 5% capacity
+            })
+            .collect(Collectors.toList());
+        
+        if (availableUsers.isEmpty()) {
+            return null;
+        }
+        
+        return availableUsers.get(random.nextInt(availableUsers.size()));
     }
     
     private ProjectMember createProjectMember(Project project, User user, BigDecimal workload, User createdBy) {

@@ -29,10 +29,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT p FROM Project p WHERE p.pmEmail = :pmEmail AND p.status = :status")
     List<Project> findByPmEmailAndStatus(@Param("pmEmail") String pmEmail, @Param("status") Project.Status status);
     
-    @Query("SELECT DISTINCT p FROM Project p JOIN p.projectMembers pm WHERE pm.user.id = :userId AND pm.isActive = true")
+    @Query("SELECT DISTINCT p FROM Project p JOIN p.projectMembers pm WHERE pm.user.id = :userId AND pm.isActive = true AND p.status != 'Closed'")
     List<Project> findProjectsByUserId(@Param("userId") Long userId);
     
-    @Query("SELECT DISTINCT p FROM Project p JOIN p.projectMembers pm WHERE pm.user.id = :userId AND pm.isActive = true")
+    @Query("SELECT DISTINCT p FROM Project p JOIN p.projectMembers pm WHERE pm.user.id = :userId AND pm.isActive = true AND p.status != 'Closed'")
     Page<Project> findProjectsByUserId(@Param("userId") Long userId, Pageable pageable);
     
     @Query("SELECT p FROM Project p WHERE p.projectName LIKE %:name%")
@@ -77,7 +77,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     
     // Filter methods for users (only assigned projects)
     @Query("SELECT DISTINCT p FROM Project p JOIN p.projectMembers pm WHERE " +
-           "pm.user.id = :userId AND pm.isActive = true AND " +
+           "pm.user.id = :userId AND pm.isActive = true AND p.status != 'Closed' AND " +
            "(:search IS NULL OR :search = '' OR " +
            " p.projectName LIKE CONCAT('%', :search, '%') OR " +
            " p.projectCode LIKE CONCAT('%', :search, '%') OR " +

@@ -17,6 +17,7 @@ import org.viettel.vgov.security.UserPrincipal;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -285,5 +286,88 @@ public class AnalyticsService {
         // This is a placeholder - real implementation would be more sophisticated
         Long totalWorkLogs = workLogRepository.countByProjectId(projectId);
         return totalWorkLogs != null ? BigDecimal.valueOf(Math.min(totalWorkLogs * 10, 100)) : BigDecimal.ZERO;
+    }
+    
+    public AnalyticsResponseDto getProjectTimelineAnalytics(LocalDate startDate, LocalDate endDate) {
+        User currentUser = getCurrentUser();
+        List<Project> allProjects = getAccessibleProjects(currentUser);
+        
+        AnalyticsResponseDto analytics = new AnalyticsResponseDto();
+        
+        // Create monthly project status data
+        List<AnalyticsResponseDto.MonthlyProjectStatusDto> monthlyData = new ArrayList<>();
+        
+        LocalDate current = startDate.withDayOfMonth(1); // Start of month
+        while (!current.isAfter(endDate.withDayOfMonth(1))) {
+            int completed = 0;
+            int inProgress = 0;
+            int planned = 0;
+            
+            LocalDate monthStart = current;
+            LocalDate monthEnd = current.plusMonths(1).minusDays(1);
+            
+            for (Project project : allProjects) {
+                LocalDate projectStart = project.getStartDate();
+                LocalDate projectEnd = project.getEndDate();
+                
+                // Skip projects that haven't started yet or ended before this month
+                if (projectStart == null || projectStart.isAfter(monthEnd)) {
+                    // Project hasn't started yet - count as planned if start date is in future
+                    if (projectStart != null && projectStart.isAfter(monthEnd)) {
+                        planned++;
+                    }
+                    continue;
+                }
+                
+                // Skip projects that ended before this month started
+                if (projectEnd != null && projectEnd.isBefore(monthStart)) {
+                    continue;
+                }
+                
+                // Project was active during this month
+                // Determine status based on project end date and current status
+                if (projectEnd != null && projectEnd.isBefore(monthEnd.plusDays(1))) {
+                    // Project completed during or before this month
+                    completed++;
+                } else {
+                    // Project was in progress during this month
+                    switch (project.getStatus()) {
+                        case InProgress:
+                        case Hold:
+                            inProgress++;
+                            break;
+                        case Closed:
+                            // If project is closed but end date is after this month,
+                            // it was completed after this month, so count as in progress for this month
+                            if (projectEnd == null || projectEnd.isAfter(monthEnd)) {
+                                completed++;
+                            } else {
+                                inProgress++;
+                            }
+                            break;
+                        case Presale:
+                            planned++;
+                            break;
+                        default:
+                            inProgress++;
+                            break;
+                    }
+                }
+            }
+            
+            AnalyticsResponseDto.MonthlyProjectStatusDto monthData =
+                new AnalyticsResponseDto.MonthlyProjectStatusDto(
+                    current.getYear() + "-" + String.format("%02d", current.getMonthValue()),
+                    completed,
+                    inProgress,
+                    planned
+                );
+            
+            monthlyData.add(monthData);
+            current = current.plusMonths(1);
+        }
+        
+        analytics.setMonthlyProjectStatus(monthlyData);
+        return analytics;
     }
 }

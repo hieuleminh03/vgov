@@ -35,6 +35,7 @@ public class AnalyticsResponseDto {
     // Timeline data
     private List<ProjectTimelineDto> projectMilestones;
     private List<WorkLogSummaryDto> workLogTrends;
+    private List<MonthlyProjectStatusDto> monthlyProjectStatus;
     
     // Recent activity
     private List<RecentActivityDto> recentActivities;
@@ -82,5 +83,15 @@ public class AnalyticsResponseDto {
         private LocalDate activityDate;
         private String userName;
         private String projectName;
+    }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MonthlyProjectStatusDto {
+        private String month; // Format: "YYYY-MM"
+        private Integer completed;
+        private Integer inProgress;
+        private Integer planned;
     }
 }

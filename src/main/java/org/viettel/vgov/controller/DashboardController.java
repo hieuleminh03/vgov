@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.viettel.vgov.dto.response.DashboardResponseDto;
 import org.viettel.vgov.service.DashboardService;
@@ -21,6 +22,7 @@ public class DashboardController {
     
     @Operation(summary = "Get dashboard overview", description = "Retrieve dashboard overview with key metrics and summaries")
     @GetMapping("/overview")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DEV') or hasRole('BA') or hasRole('TEST')")
     public ResponseEntity<DashboardResponseDto> getDashboardOverview() {
         DashboardResponseDto dashboard = dashboardService.getDashboardData();
         return ResponseEntity.ok(dashboard);

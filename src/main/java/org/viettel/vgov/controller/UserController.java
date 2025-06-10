@@ -30,9 +30,9 @@ public class UserController {
     
     private final UserService userService;
     
-    @Operation(summary = "Get all users", description = "Retrieve paginated list of all users with filters (Admin only)")
+    @Operation(summary = "Get all users", description = "Retrieve paginated list of all users with filters (Admin and PM)")
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PM')")
     public ResponseEntity<StandardResponse<PagedResponse<UserResponseDto>>> getAllUsers(
             @PageableDefault(size = 20) Pageable pageable,
             @RequestParam(required = false) String search,

@@ -62,6 +62,56 @@ public class ProjectService {
         return PagedResponse.of(projectDtos);
     }
     
+    public PagedResponse<ProjectResponseDto> getAllProjects(Pageable pageable, String search, String projectStatus, String projectType) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        User currentUser = userRepository.findById(userPrincipal.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        // Convert string parameters to enums
+        Project.Status statusEnum = null;
+        if (projectStatus != null && !projectStatus.isEmpty()) {
+            try {
+                statusEnum = Project.Status.valueOf(projectStatus);
+            } catch (IllegalArgumentException e) {
+                // Invalid status, keep as null
+            }
+        }
+        
+        Project.ProjectType typeEnum = null;
+        if (projectType != null && !projectType.isEmpty()) {
+            try {
+                typeEnum = Project.ProjectType.valueOf(projectType);
+            } catch (IllegalArgumentException e) {
+                // Invalid type, keep as null
+            }
+        }
+        
+        Page<Project> projects;
+        
+        switch (currentUser.getRole()) {
+            case admin:
+                // Admin can see all projects with filters
+                projects = projectRepository.findProjectsWithFilters(search, statusEnum, typeEnum, pageable);
+                break;
+            case pm:
+                // PM can only see projects they manage with filters
+                projects = projectRepository.findProjectsWithFiltersForPM(currentUser.getEmail(), search, statusEnum, typeEnum, pageable);
+                break;
+            case dev:
+            case ba:
+            case test:
+                // Dev/BA/Test can only see assigned projects with filters
+                projects = projectRepository.findProjectsWithFiltersForUser(currentUser.getId(), search, statusEnum, typeEnum, pageable);
+                break;
+            default:
+                throw new AccessDeniedException("Access denied");
+        }
+        
+        Page<ProjectResponseDto> projectDtos = projects.map(projectMapper::toResponseDto);
+        return PagedResponse.of(projectDtos);
+    }
+    
     public List<ProjectResponseDto> getAllProjects() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();

@@ -46,4 +46,47 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     
     @Query("SELECT p FROM Project p WHERE p.pmEmail = :pmEmail ORDER BY p.createdAt DESC")
     List<Project> findProjectsManagedByPm(@Param("pmEmail") String pmEmail);
+    
+    // Filter methods for admin (all projects)
+    @Query("SELECT p FROM Project p WHERE " +
+           "(:search IS NULL OR :search = '' OR " +
+           " p.projectName LIKE CONCAT('%', :search, '%') OR " +
+           " p.projectCode LIKE CONCAT('%', :search, '%') OR " +
+           " p.description LIKE CONCAT('%', :search, '%')) AND " +
+           "(:status IS NULL OR p.status = :status) AND " +
+           "(:projectType IS NULL OR p.projectType = :projectType)")
+    Page<Project> findProjectsWithFilters(@Param("search") String search,
+                                         @Param("status") Project.Status status,
+                                         @Param("projectType") Project.ProjectType projectType,
+                                         Pageable pageable);
+    
+    // Filter methods for PM (only their managed projects)
+    @Query("SELECT p FROM Project p WHERE " +
+           "p.pmEmail = :pmEmail AND " +
+           "(:search IS NULL OR :search = '' OR " +
+           " p.projectName LIKE CONCAT('%', :search, '%') OR " +
+           " p.projectCode LIKE CONCAT('%', :search, '%') OR " +
+           " p.description LIKE CONCAT('%', :search, '%')) AND " +
+           "(:status IS NULL OR p.status = :status) AND " +
+           "(:projectType IS NULL OR p.projectType = :projectType)")
+    Page<Project> findProjectsWithFiltersForPM(@Param("pmEmail") String pmEmail,
+                                              @Param("search") String search,
+                                              @Param("status") Project.Status status,
+                                              @Param("projectType") Project.ProjectType projectType,
+                                              Pageable pageable);
+    
+    // Filter methods for users (only assigned projects)
+    @Query("SELECT DISTINCT p FROM Project p JOIN p.projectMembers pm WHERE " +
+           "pm.user.id = :userId AND pm.isActive = true AND " +
+           "(:search IS NULL OR :search = '' OR " +
+           " p.projectName LIKE CONCAT('%', :search, '%') OR " +
+           " p.projectCode LIKE CONCAT('%', :search, '%') OR " +
+           " p.description LIKE CONCAT('%', :search, '%')) AND " +
+           "(:status IS NULL OR p.status = :status) AND " +
+           "(:projectType IS NULL OR p.projectType = :projectType)")
+    Page<Project> findProjectsWithFiltersForUser(@Param("userId") Long userId,
+                                                 @Param("search") String search,
+                                                 @Param("status") Project.Status status,
+                                                 @Param("projectType") Project.ProjectType projectType,
+                                                 Pageable pageable);
 }

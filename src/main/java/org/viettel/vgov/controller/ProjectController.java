@@ -30,12 +30,15 @@ public class ProjectController {
     
     private final ProjectService projectService;
     
-    @Operation(summary = "Get all projects", description = "List projects based on role permissions - Admin: all projects, PM: managed projects, Others: assigned projects")
+    @Operation(summary = "Get all projects", description = "List projects based on role permissions with filters - Admin: all projects, PM: managed projects, Others: assigned projects")
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('PM') or hasRole('DEV') or hasRole('BA') or hasRole('TEST')")
     public ResponseEntity<StandardResponse<PagedResponse<ProjectResponseDto>>> getAllProjects(
-            @PageableDefault(size = 20) Pageable pageable) {
-        PagedResponse<ProjectResponseDto> projects = projectService.getAllProjects(pageable);
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String projectStatus,
+            @RequestParam(required = false) String projectType) {
+        PagedResponse<ProjectResponseDto> projects = projectService.getAllProjects(pageable, search, projectStatus, projectType);
         return ResponseEntity.ok(StandardResponse.success(projects));
     }
     

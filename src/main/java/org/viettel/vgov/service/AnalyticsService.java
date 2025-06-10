@@ -333,8 +333,10 @@ public class AnalyticsService {
                     // Project was in progress during this month
                     switch (project.getStatus()) {
                         case InProgress:
-                        case Hold:
                             inProgress++;
+                            break;
+                        case Hold:
+                            inProgress++; // Count Hold as inProgress for simplicity
                             break;
                         case Closed:
                             // If project is closed but end date is after this month,

@@ -39,6 +39,21 @@ public class UserService {
         return PagedResponse.of(userDtos);
     }
     
+    public PagedResponse<UserResponseDto> getAllUsers(Pageable pageable, String search, String role, Boolean isActive) {
+        User.Role roleEnum = null;
+        if (role != null && !role.isEmpty()) {
+            try {
+                roleEnum = User.Role.valueOf(role);
+            } catch (IllegalArgumentException e) {
+                // Invalid role, keep as null
+            }
+        }
+        
+        Page<User> users = userRepository.findUsersWithFilters(search, roleEnum, isActive, pageable);
+        Page<UserResponseDto> userDtos = users.map(userMapper::toResponseDto);
+        return PagedResponse.of(userDtos);
+    }
+    
     public List<UserResponseDto> getAllUsers() {
         List<User> users = userRepository.findByIsActiveTrue();
         return users.stream()

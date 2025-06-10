@@ -41,4 +41,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByIsActive(Boolean isActive);
     
     long countByRole(User.Role role);
+    
+    // Filter method for user search with pagination
+    @Query("SELECT u FROM User u WHERE " +
+           "(:search IS NULL OR " +
+           " LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           " LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           " LOWER(u.employeeCode) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+           "(:roleEnum IS NULL OR u.role = :roleEnum) AND " +
+           "(:isActive IS NULL OR u.isActive = :isActive)")
+    Page<User> findUsersWithFilters(@Param("search") String search, 
+                                   @Param("roleEnum") User.Role roleEnum, 
+                                   @Param("isActive") Boolean isActive, 
+                                   Pageable pageable);
 }

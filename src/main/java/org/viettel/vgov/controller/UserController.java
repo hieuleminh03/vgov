@@ -30,12 +30,15 @@ public class UserController {
     
     private final UserService userService;
     
-    @Operation(summary = "Get all users", description = "Retrieve paginated list of all users (Admin only)")
+    @Operation(summary = "Get all users", description = "Retrieve paginated list of all users with filters (Admin only)")
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StandardResponse<PagedResponse<UserResponseDto>>> getAllUsers(
-            @PageableDefault(size = 20) Pageable pageable) {
-        PagedResponse<UserResponseDto> users = userService.getAllUsers(pageable);
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) Boolean isActive) {
+        PagedResponse<UserResponseDto> users = userService.getAllUsers(pageable, search, role, isActive);
         return ResponseEntity.ok(StandardResponse.success(users));
     }
     

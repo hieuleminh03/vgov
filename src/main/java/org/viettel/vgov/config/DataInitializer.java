@@ -427,14 +427,22 @@ public class DataInitializer implements CommandLineRunner {
         User admin = users.get(0);
         
         Random random = new Random(42); // Fixed seed for consistent results
-        
-        for (int i = 0; i < projects.size(); i++) {
+          for (int i = 0; i < projects.size(); i++) {
             Project project = projects.get(i);
             
             // Assign PM (rotate through available PMs)
             User pm = pms.get(i % pms.size());
             BigDecimal pmWorkload = new BigDecimal(20 + random.nextInt(31)); // 20-50%
-            createProjectMember(project, pm, pmWorkload, admin);
+            
+            // Create PM member (handle closed projects properly)
+            if (project.getStatus() == Project.Status.Closed) {
+                ProjectMember pmMember = createProjectMember(project, pm, pmWorkload, admin);
+                pmMember.setIsActive(false);
+                pmMember.setLeftDate(project.getEndDate());
+                projectMemberRepository.save(pmMember);
+            } else {
+                createProjectMember(project, pm, pmWorkload, admin);
+            }
             
             // Assign 2-5 developers per project
             int devCount = 2 + random.nextInt(4); // 2-5 developers
@@ -513,16 +521,7 @@ public class DataInitializer implements CommandLineRunner {
                         projectMemberRepository.save(member);
                     } else {
                         createProjectMember(project, tester, testerWorkload, admin);
-                    }
-                }
-            }
-            
-            // For closed projects, also mark PM as inactive
-            if (project.getStatus() == Project.Status.Closed) {
-                ProjectMember pmMember = createProjectMember(project, pm, pmWorkload, admin);
-                pmMember.setIsActive(false);
-                pmMember.setLeftDate(project.getEndDate());
-                projectMemberRepository.save(pmMember);
+                    }                }
             }
         }
         

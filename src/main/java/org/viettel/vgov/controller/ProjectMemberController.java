@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.viettel.vgov.dto.request.ProjectMemberRequestDto;
 import org.viettel.vgov.dto.response.ProjectMemberResponseDto;
-import org.viettel.vgov.dto.response.UserResponseDto;
 import org.viettel.vgov.service.ProjectMemberService;
 
 import java.util.List;

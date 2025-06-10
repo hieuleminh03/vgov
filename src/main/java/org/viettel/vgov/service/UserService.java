@@ -178,6 +178,38 @@ public class UserService {
         return workloadInfo;
     }
     
+    public Map<String, String>[] getAvailableRoles() {
+        User.Role[] roles = User.Role.values();
+        Map<String, String>[] roleList = new Map[roles.length];
+        
+        for (int i = 0; i < roles.length; i++) {
+            Map<String, String> roleMap = new HashMap<>();
+            roleMap.put("id", roles[i].name());
+            roleMap.put("name", roles[i].name());
+            roleMap.put("description", getRoleDescription(roles[i]));
+            roleList[i] = roleMap;
+        }
+        
+        return roleList;
+    }
+    
+    private String getRoleDescription(User.Role role) {
+        switch (role) {
+            case admin:
+                return "Quản trị viên";
+            case pm:
+                return "Quản lý dự án";
+            case dev:
+                return "Lập trình viên";
+            case ba:
+                return "Phân tích nghiệp vụ";
+            case test:
+                return "Kiểm thử viên";
+            default:
+                return role.name();
+        }
+    }
+    
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {

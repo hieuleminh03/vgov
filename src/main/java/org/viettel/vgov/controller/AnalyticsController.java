@@ -22,7 +22,7 @@ public class AnalyticsController {
     
     @Operation(summary = "Get project analytics", description = "Retrieve project analytics data (Admin/PM only)")
     @GetMapping("/projects")
-    @PreAuthorize("hasRole('admin') or hasRole('pm')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PM')")
     public ResponseEntity<AnalyticsResponseDto> getProjectAnalytics() {
         AnalyticsResponseDto analytics = analyticsService.getProjectAnalytics();
         return ResponseEntity.ok(analytics);
@@ -30,7 +30,7 @@ public class AnalyticsController {
     
     @Operation(summary = "Get employee analytics", description = "Retrieve employee performance analytics (Admin only)")
     @GetMapping("/employees")
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AnalyticsResponseDto> getEmployeeAnalytics() {
         AnalyticsResponseDto analytics = analyticsService.getEmployeeAnalytics();
         return ResponseEntity.ok(analytics);
@@ -38,7 +38,7 @@ public class AnalyticsController {
     
     @Operation(summary = "Get workload analytics", description = "Retrieve team workload analytics (Admin only)")
     @GetMapping("/workload")
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AnalyticsResponseDto> getWorkloadAnalytics() {
         AnalyticsResponseDto analytics = analyticsService.getWorkloadAnalytics();
         return ResponseEntity.ok(analytics);
@@ -46,7 +46,7 @@ public class AnalyticsController {
     
     @Operation(summary = "Get project timeline", description = "Retrieve project timeline and milestones")
     @GetMapping("/project/{id}/timeline")
-    @PreAuthorize("hasRole('admin') or hasRole('pm') or @projectSecurityService.canAccessProject(#id, authentication.name)")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PM') or @projectSecurityService.canAccessProject(#id, authentication.name)")
     public ResponseEntity<AnalyticsResponseDto> getProjectTimeline(@PathVariable Long id) {
         AnalyticsResponseDto timeline = analyticsService.getProjectTimeline(id);
         return ResponseEntity.ok(timeline);

@@ -39,6 +39,14 @@ public class UserController {
         return ResponseEntity.ok(StandardResponse.success(users));
     }
     
+    @Operation(summary = "Get available user roles", description = "Get list of available user roles (Admin only)")
+    @GetMapping("/roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<StandardResponse<Map<String, String>[]>> getUserRoles() {
+        Map<String, String>[] roles = userService.getAvailableRoles();
+        return ResponseEntity.ok(StandardResponse.success(roles));
+    }
+    
     @Operation(summary = "Get user by ID", description = "Retrieve user details by user ID (Admin only)")
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -104,4 +112,5 @@ public class UserController {
         Map<String, Object> workload = userService.getUserWorkload(id);
         return ResponseEntity.ok(StandardResponse.success(workload));
     }
+    
 }
